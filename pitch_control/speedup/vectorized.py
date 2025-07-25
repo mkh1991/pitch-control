@@ -32,78 +32,93 @@ class NumpyVectorizedBackend:
         reaction_times: np.ndarray,
     ) -> np.ndarray:
         """
-        Pure NumPy implementation of time-to-intercept calculations.
+        Vectorized implementation that produces identical results to the Numba version.
 
-        Same signature as Numba version but using only NumPy operations.
+        Follows Laurie Shaw's approach:
+        1. Continue at current velocity during reaction time
+        2. Calculate distance from reaction position to target
+        3. Handle acceleration from reaction position (starting from zero velocity)
+
+        This should produce IDENTICAL results to your Numba implementation.
         """
         n_players, _ = player_positions.shape
         n_grid, _ = grid_points.shape
 
-        # Broadcast for vectorized distance calculation
+        # STEP 1: Calculate reaction positions (where players will be after reaction time)
+        # Shape: (n_players, 2) - same as: reaction_pos_x = pos_x + vel_x * reaction_time
+        reaction_positions = (
+            player_positions + player_velocities * reaction_times[:, np.newaxis]
+        )
+
+        # STEP 2: Vectorized distance calculation from reaction positions to targets
         # Shape: (n_players, n_grid, 2)
-        pos_expanded = player_positions[:, np.newaxis, :]
-        grid_expanded = grid_points[np.newaxis, :, :]
+        reaction_pos_expanded = reaction_positions[
+            :, np.newaxis, :
+        ]  # (n_players, 1, 2)
+        grid_expanded = grid_points[np.newaxis, :, :]  # (1, n_grid, 2)
 
-        # Calculate distances: (n_players, n_grid)
-        diff = grid_expanded - pos_expanded
-        distances = np.sqrt(np.sum(diff**2, axis=2))
+        # Calculate distances from reaction positions to grid points
+        # Same as: dx = target_x - reaction_pos_x; dy = target_y - reaction_pos_y; distance = sqrt(dx*dx + dy*dy)
+        diff = grid_expanded - reaction_pos_expanded
+        distances = np.sqrt(np.sum(diff**2, axis=2))  # Shape: (n_players, n_grid)
 
-        # Avoid division by zero
-        distances = np.maximum(distances, 1e-6)
+        # Handle very small distances (same as: if distance < 1e-6)
+        very_close_mask = distances < 1e-6
+        distances = np.maximum(distances, 1e-6)  # Avoid division by zero
 
-        # Direction vectors: (n_players, n_grid, 2)
-        directions = diff / distances[..., np.newaxis]
+        # STEP 3: Handle acceleration cases
+        max_speeds_safe = np.maximum(max_speeds, 0.1)  # Same as: max(max_speed, 0.1)
+        accelerations_safe = np.maximum(accelerations, 0.1)  # Avoid division by zero
 
-        # Current velocity toward target: (n_players, n_grid)
-        vel_expanded = player_velocities[:, np.newaxis, :]
-        vel_toward = np.maximum(0, np.sum(vel_expanded * directions, axis=2))
+        # Expand arrays for broadcasting
+        max_speeds_expanded = max_speeds_safe[:, np.newaxis]  # (n_players, 1)
+        accelerations_expanded = accelerations_safe[:, np.newaxis]  # (n_players, 1)
+        reaction_times_expanded = reaction_times[:, np.newaxis]  # (n_players, 1)
 
-        # Physics calculations (vectorized)
-        reaction_distances = vel_toward * reaction_times[:, np.newaxis]
-        remaining_distances = np.maximum(0, distances - reaction_distances)
+        # Case 1: No acceleration (acceleration <= 0)
+        no_accel_mask = accelerations[:, np.newaxis] <= 0
 
-        # Simplified acceleration model (vectorized)
-        speed_diff = max_speeds[:, np.newaxis] - vel_toward
-        time_to_max_speed = np.maximum(
-            0, speed_diff / np.maximum(accelerations[:, np.newaxis], 0.1)
+        # Simple sprint time: distance / max_speed
+        simple_sprint_times = distances / max_speeds_expanded
+
+        # Case 2: With acceleration (acceleration > 0)
+        # Same as: time_to_max_speed = max_speed / acceleration
+        time_to_max_speed = max_speeds_expanded / accelerations_expanded
+
+        # Same as: distance_during_accel = 0.5 * acceleration * time_to_max_speed * time_to_max_speed
+        distance_during_accel = 0.5 * accelerations_expanded * time_to_max_speed**2
+
+        # Check if we reach target during acceleration phase
+        # Same as: if distance_during_accel >= distance
+        reaches_during_accel = distance_during_accel >= distances
+
+        # Case 2a: Reach target during acceleration
+        # Same as: accel_time = sqrt(2.0 * distance / acceleration)
+        accel_only_time = np.sqrt(2.0 * distances / accelerations_expanded)
+
+        # Case 2b: Accelerate then constant speed
+        # Same as: remaining_distance = distance - distance_during_accel
+        remaining_distance = distances - distance_during_accel
+        # Same as: const_time = remaining_distance / max_speed
+        const_time = remaining_distance / max_speeds_expanded
+        # Same as: total = time_to_max_speed + const_time
+        two_phase_time = time_to_max_speed + const_time
+
+        # Choose between acceleration cases
+        accel_sprint_times = np.where(
+            reaches_during_accel, accel_only_time, two_phase_time
         )
 
-        # Distance covered during acceleration
-        accel_distance = (
-            vel_toward * time_to_max_speed
-            + 0.5 * accelerations[:, np.newaxis] * time_to_max_speed**2
-        )
+        # Choose between no acceleration vs acceleration
+        sprint_times = np.where(no_accel_mask, simple_sprint_times, accel_sprint_times)
 
-        # Where we reach target before max speed
-        before_max_mask = accel_distance >= remaining_distances
+        # Add reaction time (same as: times[p, g] = reaction_time + sprint_time)
+        total_times = reaction_times_expanded + sprint_times
 
-        # Case 1: Reach target during acceleration
-        # Solve: d = v0*t + 0.5*a*t^2 using quadratic formula
-        a_coeff = 0.5 * accelerations[:, np.newaxis]
-        b_coeff = vel_toward
-        c_coeff = -remaining_distances
+        # Handle very close cases (same as: if distance < 1e-6: times[p, g] = reaction_time)
+        total_times = np.where(very_close_mask, reaction_times_expanded, total_times)
 
-        discriminant = b_coeff**2 + 4 * a_coeff * c_coeff
-        discriminant = np.maximum(discriminant, 0)  # Avoid negative sqrt
-
-        time_accel = np.where(
-            a_coeff > 1e-6,
-            (-b_coeff + np.sqrt(discriminant)) / (2 * a_coeff),
-            remaining_distances / np.maximum(vel_toward, 0.1),
-        )
-
-        # Case 2: Accelerate to max speed, then constant speed
-        remaining_at_max = remaining_distances - accel_distance
-        time_at_max = remaining_at_max / np.maximum(max_speeds[:, np.newaxis], 0.1)
-        time_constant = time_to_max_speed + time_at_max
-
-        # Choose appropriate calculation
-        total_time = np.where(before_max_mask, time_accel, time_constant)
-
-        # Add reaction time
-        total_time += reaction_times[:, np.newaxis]
-
-        return total_time
+        return total_times
 
     @staticmethod
     def calculate_ball_travel_times(

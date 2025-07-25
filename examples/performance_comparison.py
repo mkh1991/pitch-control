@@ -63,8 +63,8 @@ def profile_backend(
         # Force compilation of individual Numba functions
         from pitch_control.models.spearman import (
             calculate_times_vectorized,
-            _calculate_ball_travel_times,
-            _calculate_control_probabilities,
+            calculate_ball_travel_times_numba,
+            _calc_control_probs_numba,
         )
 
         _ = calculate_times_vectorized(
@@ -75,11 +75,11 @@ def profile_backend(
             accelerations,
             reaction_times,
         )
-        _ = _calculate_ball_travel_times(
+        _ = calculate_ball_travel_times_numba(
             ball_pos_array, grid_points, model.spearman_config.average_ball_speed
         )
         adjusted_times = np.random.random((len(players), len(grid_points))) * 2.0
-        _ = _calculate_control_probabilities(
+        _ = _calc_control_probs_numba(
             adjusted_times, team_ids, model.spearman_config.sigma
         )
 
@@ -118,40 +118,24 @@ def profile_backend(
 
         # Time player time calculation (backend-specific)
         start = time.time()
-        if use_numba:
-            from pitch_control.models.spearman import calculate_times_vectorized
-
-            player_times = calculate_times_vectorized(
-                positions,
-                velocities,
-                grid_points,
-                max_speeds,
-                accelerations,
-                reaction_times,
-            )
-        else:
-            player_times = model._calculate_times_numpy(
-                positions,
-                velocities,
-                grid_points,
-                max_speeds,
-                accelerations,
-                reaction_times,
-            )
+        player_times = model._calculate_player_times(
+            positions,
+            velocities,
+            grid_points,
+            max_speeds,
+            accelerations,
+            reaction_times,
+        )
         physics_time = time.time() - start
         times["physics"].append(physics_time)
 
         # Time ball calculation (backend-specific)
         start = time.time()
         ball_pos_array = np.array([ball_position.x, ball_position.y])
-        if use_numba:
-            from pitch_control.models.spearman import _calculate_ball_travel_times
-
-            ball_times = _calculate_ball_travel_times(
-                ball_pos_array, grid_points, model.spearman_config.average_ball_speed
-            )
-        else:
-            ball_times = model._calculate_ball_times_numpy(ball_pos_array, grid_points)
+        ball_times = model._calculate_ball_travel_times(
+            ball_pos_array,
+            grid_points,
+        )
 
         adjusted_times = player_times + ball_times[np.newaxis, :]
         ball_time = time.time() - start
@@ -159,16 +143,9 @@ def profile_backend(
 
         # Time probability calculation (backend-specific)
         start = time.time()
-        if use_numba:
-            from pitch_control.models.spearman import _calculate_control_probabilities
-
-            home_control_flat, away_control_flat = _calculate_control_probabilities(
-                adjusted_times, team_ids, model.spearman_config.sigma
-            )
-        else:
-            home_control_flat, away_control_flat = model._calculate_probabilities_numpy(
-                adjusted_times, team_ids
-            )
+        home_control_flat, away_control_flat = model._calculate_control_probs(
+            adjusted_times, team_ids, model.spearman_config.sigma
+        )
         prob_time = time.time() - start
         times["probability"].append(prob_time)
 

@@ -88,7 +88,7 @@ def calculate_times_vectorized(
 
 
 @jit(nopython=True, parallel=True, cache=True, fastmath=True)
-def _calculate_ball_travel_times(ball_position, grid_points, ball_speed):
+def calculate_ball_travel_times_numba(ball_position, grid_points, ball_speed):
     """
     Calculate ball travel times to all grid points.
 
@@ -113,11 +113,9 @@ def _calculate_ball_travel_times(ball_position, grid_points, ball_speed):
     return times
 
 
-def _calculate_control_probabilities(
-    player_times, team_ids, sigma, algorithm="spearman"
-):
+def _calc_control_probs_numba(player_times, team_ids, sigma, algorithm="spearman"):
     if algorithm == "spearman":
-        return _calc_control_prob_spearman(player_times, team_ids)
+        return _calc_control_prob_spearman(player_times, team_ids, sigma)
     if algorithm == "fastest_player":
         return _calc_control_prob_fastest_player_to_ball(player_times, team_ids, sigma)
     return _calc_control_prob_spearman(player_times, team_ids, sigma)
@@ -277,7 +275,7 @@ class SpearmanModel(OptimizedPitchControlModel):
         )
 
     @staticmethod
-    def _calculate_times_vectorized(
+    def _calculate_times_numba(
         positions,
         velocities,
         grid_points,
@@ -293,6 +291,61 @@ class SpearmanModel(OptimizedPitchControlModel):
             accelerations,
             reaction_times,
         )
+
+    def _calculate_ball_travel_times(self, ball_position, grid_points):
+        if self.config.use_numba:
+            ball_times = calculate_ball_travel_times_numba(
+                ball_position, grid_points, self.spearman_config.average_ball_speed
+            )
+        else:
+            # TODO: make this cleaner, internally _calculate_ball_travel_times also
+            # uses self.spearman_config.average_ball_speed
+            ball_times = self._calculate_ball_times_numpy(ball_position, grid_points)
+        return ball_times
+
+    def _calculate_player_times(
+        self,
+        positions,
+        velocities,
+        grid_points,
+        max_speeds,
+        accelerations,
+        reaction_times,
+    ):
+        # Calculate player arrival times (vectorized)
+        if self.config.use_numba:
+            player_times = self._calculate_times_numba(
+                positions,
+                velocities,
+                grid_points,
+                max_speeds,
+                accelerations,
+                reaction_times,
+            )
+        else:
+            player_times = self._calculate_times_numpy(
+                positions,
+                velocities,
+                grid_points,
+                max_speeds,
+                accelerations,
+                reaction_times,
+            )
+        return player_times
+
+    def _calculate_control_probs(
+        self, player_times, team_ids, sigma
+    ) -> Tuple[np.ndarray, ...]:
+        # Calculate control probabilities
+        if self.config.use_numba:
+            home_control_flat, away_control_flat = _calc_control_probs_numba(
+                player_times, team_ids, sigma
+            )
+        else:
+            home_control_flat, away_control_flat = self._calc_control_probs_numpy(
+                player_times, team_ids, sigma
+            )
+        return home_control_flat, away_control_flat
 
     def calculate(
         self, players: List[PlayerState], ball_position: Point, **kwargs
@@ -323,46 +376,26 @@ class SpearmanModel(OptimizedPitchControlModel):
         )
 
         # Calculate player arrival times (vectorized)
-        if self.config.use_numba:
-            player_times = self._calculate_times_vectorized(
-                positions,
-                velocities,
-                grid_points,
-                max_speeds,
-                accelerations,
-                reaction_times,
-            )
-        else:
-            player_times = NumpyVectorizedBackend.calculate_times_vectorized(
-                positions,
-                velocities,
-                grid_points,
-                max_speeds,
-                accelerations,
-                reaction_times,
-            )
+        player_times = self._calculate_player_times(
+            positions,
+            velocities,
+            grid_points,
+            max_speeds,
+            accelerations,
+            reaction_times,
+        )
 
         # Calculate ball travel times
         ball_pos_array = np.array([ball_position.x, ball_position.y])
-        if self.config.use_numba:
-            ball_times = _calculate_ball_travel_times(
-                ball_pos_array, grid_points, self.spearman_config.average_ball_speed
-            )
-        else:
-            ball_times = self._calculate_ball_times_numpy(ball_pos_array, grid_points)
+        ball_times = self._calculate_ball_travel_times(ball_pos_array, grid_points)
 
         # Adjust player times for ball travel time
         adjusted_times = player_times + ball_times[np.newaxis, :]
 
         # Calculate control probabilities
-        if self.config.use_numba:
-            home_control_flat, away_control_flat = _calculate_control_probabilities(
-                adjusted_times, team_ids, self.spearman_config.sigma
-            )
-        else:
-            home_control_flat, away_control_flat = self._calculate_probabilities_numpy(
-                adjusted_times, team_ids
-            )
+        home_control_flat, away_control_flat = self._calculate_control_probs(
+            adjusted_times, team_ids, self.spearman_config.sigma
+        )
 
         # Reshape to grid
         grid_shape = grid_x.shape
@@ -395,8 +428,8 @@ class SpearmanModel(OptimizedPitchControlModel):
             metadata=metadata,
         )
 
+    @staticmethod
     def _calculate_times_numpy(
-        self,
         positions,
         velocities,
         grid_points,
@@ -404,75 +437,69 @@ class SpearmanModel(OptimizedPitchControlModel):
         accelerations,
         reaction_times,
     ):
-        """NumPy fallback for time calculations (slower than Numba)"""
-        n_players, _ = positions.shape
-        n_grid, _ = grid_points.shape
-
-        # Broadcast for vectorized distance calculation
-        # Shape: (n_players, n_grid, 2)
-        pos_expanded = positions[:, np.newaxis, :]
-        grid_expanded = grid_points[np.newaxis, :, :]
-
-        # Calculate distances: (n_players, n_grid)
-        diff = grid_expanded - pos_expanded
-        distances = np.sqrt(np.sum(diff**2, axis=2))
-
-        # Direction vectors: (n_players, n_grid, 2)
-        directions = np.zeros_like(diff)
-        mask = distances > 1e-6
-        directions[mask] = diff[mask] / distances[mask, np.newaxis]
-
-        # Current velocity toward target: (n_players, n_grid)
-        vel_expanded = velocities[:, np.newaxis, :]
-        vel_toward = np.maximum(0, np.sum(vel_expanded * directions, axis=2))
-
-        # Physics calculations (vectorized)
-        reaction_distances = vel_toward * reaction_times[:, np.newaxis]
-        remaining_distances = np.maximum(0, distances - reaction_distances)
-
-        # Simplified time calculation (can be made more sophisticated)
-        effective_speeds = np.minimum(
-            max_speeds[:, np.newaxis], vel_toward + accelerations[:, np.newaxis] * 2.0
+        return NumpyVectorizedBackend.calculate_times_vectorized(
+            positions,
+            velocities,
+            grid_points,
+            max_speeds,
+            accelerations,
+            reaction_times,
         )
-
-        times = reaction_times[:, np.newaxis] + remaining_distances / np.maximum(
-            effective_speeds, 0.1
-        )
-
-        return times
 
     def _calculate_ball_times_numpy(self, ball_position, grid_points):
         """NumPy fallback for ball travel times"""
         distances = np.sqrt(np.sum((grid_points - ball_position) ** 2, axis=1))
         return distances / self.spearman_config.average_ball_speed
 
-    def _calculate_probabilities_numpy(self, player_times, team_ids):
+    def _calc_control_probs_numpy(
+        self, player_times, team_ids, tti_sigma: float = 0.45
+    ):
         """NumPy fallback for probability calculations"""
-        n_grid = player_times.shape[1]
-        home_control = np.zeros(n_grid)
-        away_control = np.zeros(n_grid)
+        """
+        NumPy implementation of Spearman's analytical approximation.
 
+        Uses exponential decay from minimum time to approximate the integration
+        result from the full Spearman model.
+
+        Args:
+            player_times: (n_players, n_grid) array of time-to-intercept values
+            team_ids: (n_players,) array of team IDs (0 for home, 1 for away)
+            tti_sigma: uncertainty parameter from Spearman's model
+
+        Returns:
+            (home_control, away_control): tuple of (n_grid,) arrays
+        """
+        n_players, n_grid = player_times.shape
+
+        # Find minimum time at each grid point
+        # Shape: (n_grid,)
+        min_times = np.min(player_times, axis=0)
+
+        # Calculate time differences from minimum
+        # Shape: (n_players, n_grid)
+        time_diffs = player_times - min_times[np.newaxis, :]
+
+        # Calculate control strengths using exponential decay
+        # Shape: (n_players, n_grid)
+        control_strengths = np.exp(-time_diffs / tti_sigma)
+
+        # Create team masks for vectorized team assignment
+        # Shape: (n_players,)
         home_mask = team_ids == 0
         away_mask = team_ids == 1
 
-        for g in range(n_grid):
-            home_times = player_times[home_mask, g]
-            away_times = player_times[away_mask, g]
+        # Sum control strengths by team
+        # Shape: (n_grid,)
+        home_strengths = np.sum(control_strengths[home_mask, :], axis=0)
+        away_strengths = np.sum(control_strengths[away_mask, :], axis=0)
 
-            min_home = np.min(home_times) if len(home_times) > 0 else np.inf
-            min_away = np.min(away_times) if len(away_times) > 0 else np.inf
+        # Calculate total strength and normalize
+        total_strengths = home_strengths + away_strengths
 
-            if min_home == np.inf:
-                home_prob = 0.0
-            elif min_away == np.inf:
-                home_prob = 1.0
-            else:
-                time_diff = min_away - min_home
-                home_prob = 1.0 / (
-                    1.0 + np.exp(-time_diff / self.spearman_config.sigma)
-                )
+        # Avoid division by zero
+        safe_total = np.where(total_strengths > 0, total_strengths, 1.0)
 
-            home_control[g] = home_prob
-            away_control[g] = 1.0 - home_prob
+        home_control = np.where(total_strengths > 0, home_strengths / safe_total, 0.5)
+        away_control = np.where(total_strengths > 0, away_strengths / safe_total, 0.5)
 
         return home_control, away_control

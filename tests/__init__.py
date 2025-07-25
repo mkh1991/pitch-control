@@ -129,7 +129,7 @@ class TestSpearmanModel:
         model, players, _ = basic_setup
 
         # Ball near home team
-        result_home = model.calculate(players, Point(-20, 0))
+        result_home = model.calculate(players, Point(-40, 0))
         home_control_near_home = np.mean(result_home.control_surface.home_control)
 
         # Ball near away team
