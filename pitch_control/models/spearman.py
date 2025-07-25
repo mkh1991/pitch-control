@@ -32,21 +32,10 @@ def _calculate_times_vectorized(
     reaction_times,
 ):
     """
-    Vectorized calculation of time-to-intercept for all players to all grid points.
-
-    Args:
-        player_positions: (n_players, 2) array of player positions
-        player_velocities: (n_players, 2) array of player velocities
-        grid_points: (n_grid, 2) array of grid point coordinates
-        max_speeds: (n_players,) array of maximum speeds
-        accelerations: (n_players,) array of accelerations
-        reaction_times: (n_players,) array of reaction times
-
-    Returns:
-        (n_players, n_grid) array of intercept times
+    Corrected implementation that follows Laurie Shaw's approach exactly
+    but includes optional acceleration (though Laurie notes it's "not used")
     """
-    n_players = player_positions.shape[0]
-    n_grid = grid_points.shape[0]
+    n_players, n_grid = player_positions.shape[0], grid_points.shape[0]
     times = np.zeros((n_players, n_grid))
 
     for p in prange(n_players):
@@ -59,63 +48,38 @@ def _calculate_times_vectorized(
         for g in range(n_grid):
             target_x, target_y = grid_points[g, 0], grid_points[g, 1]
 
-            # Calculate distance
-            dx = target_x - pos_x
-            dy = target_y - pos_y
+            # Step 1: Continue at current velocity during reaction time
+            reaction_pos_x = pos_x + vel_x * reaction_time
+            reaction_pos_y = pos_y + vel_y * reaction_time
+
+            # Step 2: Calculate distance from reaction position to target
+            dx = target_x - reaction_pos_x
+            dy = target_y - reaction_pos_y
             distance = np.sqrt(dx * dx + dy * dy)
 
-            if distance < 1e-6:  # Already at target
+            if distance < 1e-6:
                 times[p, g] = reaction_time
                 continue
 
-            # Direction unit vector
-            dir_x = dx / distance
-            dir_y = dy / distance
-
-            # Current velocity component toward target
-            vel_toward_target = max(0.0, vel_x * dir_x + vel_y * dir_y)
-
-            # Distance covered during reaction time
-            reaction_distance = vel_toward_target * reaction_time
-            remaining_distance = max(0.0, distance - reaction_distance)
-
-            if remaining_distance < 1e-6:
-                times[p, g] = reaction_time
-                continue
-
-            # Time calculation with acceleration
-            speed_diff = max_speed - vel_toward_target
-
-            if speed_diff <= 0 or acceleration <= 0:
-                # Already at max speed or no acceleration
-                times[p, g] = reaction_time + remaining_distance / max(max_speed, 0.1)
+            # Step 3: Sprint from reaction position to target
+            # Laurie's implementation: just use max speed (no acceleration)
+            if acceleration <= 0:
+                sprint_time = distance / max(max_speed, 0.1)
+                times[p, g] = reaction_time + sprint_time
             else:
-                # Time to reach max speed
-                time_to_max_speed = speed_diff / acceleration
-                distance_during_accel = (
-                    vel_toward_target * time_to_max_speed
-                    + 0.5 * acceleration * time_to_max_speed * time_to_max_speed
-                )
+                # Optional: include acceleration (but Laurie doesn't use this)
+                time_to_max_speed = max_speed / acceleration
+                distance_during_accel = 0.5 * acceleration * time_to_max_speed * time_to_max_speed
 
-                if distance_during_accel >= remaining_distance:
-                    # Reach target before max speed
-                    # Solve: remaining_distance = vel_toward_target * t + 0.5 * acceleration * t^2
-                    a = 0.5 * acceleration
-                    b = vel_toward_target
-                    c = -remaining_distance
-
-                    discriminant = b * b + 4 * a * c
-                    if discriminant >= 0:
-                        time_accel = (-b + np.sqrt(discriminant)) / (2 * a)
-                    else:
-                        time_accel = remaining_distance / max(vel_toward_target, 0.1)
-
-                    times[p, g] = reaction_time + time_accel
+                if distance_during_accel >= distance:
+                    # Reach target during acceleration
+                    accel_time = np.sqrt(2.0 * distance / acceleration)
+                    times[p, g] = reaction_time + accel_time
                 else:
-                    # Accelerate to max speed, then constant
-                    remaining_at_max = remaining_distance - distance_during_accel
-                    time_at_max = remaining_at_max / max_speed
-                    times[p, g] = reaction_time + time_to_max_speed + time_at_max
+                    # Accelerate then constant speed
+                    remaining_distance = distance - distance_during_accel
+                    const_time = remaining_distance / max_speed
+                    times[p, g] = reaction_time + time_to_max_speed + const_time
 
     return times
 
