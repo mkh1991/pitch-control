@@ -1,10 +1,7 @@
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional, Dict, Any
-import time
 import numpy as np
 
-from ..core import PitchControlModel, PitchControlResult, PlayerState, Point
+from ..core import PitchControlModel
 
 
 @dataclass

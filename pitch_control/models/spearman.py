@@ -250,6 +250,24 @@ class SpearmanModel(OptimizedPitchControlModel):
             team_ids,
         )
 
+    def _calculate_times_vectorized(
+            self,
+            positions,
+            velocities,
+            grid_points,
+            max_speeds,
+            accelerations,
+            reaction_times,
+            ):
+        return _calculate_times_vectorized(
+            positions,
+            velocities,
+            grid_points,
+            max_speeds,
+            accelerations,
+            reaction_times,
+        )
+
     def calculate(
         self, players: List[PlayerState], ball_position: Point, **kwargs
     ) -> PitchControlResult:
