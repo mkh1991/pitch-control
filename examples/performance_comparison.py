@@ -8,14 +8,14 @@ import matplotlib.pyplot as plt
 from pitch_control.core import Pitch, Point
 from pitch_control.models import SpearmanModel, SpearmanConfig
 from examples.basic_example import create_sample_players
-from typing import List
+from typing import List, Tuple
 
 
 def profile_backend(
     backend: str,
     players: List = None,
     ball_position: Point = None,
-    grid_resolution: tuple = (84, 54),
+    grid_resolution: Tuple[int, int] = (84, 54),
     n_runs: int = 3,
 ):
     """
@@ -62,12 +62,12 @@ def profile_backend(
 
         # Force compilation of individual Numba functions
         from pitch_control.models.spearman import (
-            _calculate_times_vectorized,
+            calculate_times_vectorized,
             _calculate_ball_travel_times,
             _calculate_control_probabilities,
         )
 
-        _ = _calculate_times_vectorized(
+        _ = calculate_times_vectorized(
             positions,
             velocities,
             grid_points,
@@ -119,9 +119,9 @@ def profile_backend(
         # Time player time calculation (backend-specific)
         start = time.time()
         if use_numba:
-            from pitch_control.models.spearman import _calculate_times_vectorized
+            from pitch_control.models.spearman import calculate_times_vectorized
 
-            player_times = _calculate_times_vectorized(
+            player_times = calculate_times_vectorized(
                 positions,
                 velocities,
                 grid_points,

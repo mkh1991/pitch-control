@@ -120,7 +120,7 @@ def plot_combined_control(
         ],
         origin="lower",
         aspect="equal",
-        alpha=0.7,
+        alpha=0.9,
     )
 
     ax.set_xlabel("X Position (m)")

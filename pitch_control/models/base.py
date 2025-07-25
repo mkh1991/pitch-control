@@ -32,7 +32,10 @@ class OptimizedPitchControlModel(PitchControlModel):
         dummy_velocities = np.array([[1.0, 0.0], [0.0, 1.0]])
         dummy_grid = np.array([[5.0, 5.0]])
 
-        # This will compile the functions
+        # This will compile ONLY the time of player to each grid cell
+        # function. Probably overcomplicated to do this for every numba-based function,
+        # and lazy compile after first call is okay since the benefits of numba are
+        # only significant after the first call.
         try:
             self._calculate_times_vectorized(
                 dummy_positions,
@@ -45,3 +48,6 @@ class OptimizedPitchControlModel(PitchControlModel):
         except Exception:
             # If compilation fails, fall back to non-numba
             self.config.use_numba = False
+
+    def _calculate_times_vectorized(self, *args, **kwargs):
+        pass
