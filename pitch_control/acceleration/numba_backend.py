@@ -2,7 +2,6 @@
 Numba JIT compilation backend for maximum performance.
 """
 
-import numba
 from numba import jit, prange
 import numpy as np
 
