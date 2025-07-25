@@ -6,9 +6,11 @@ import numpy as np
 
 from ..core import PitchControlModel, PitchControlResult, PlayerState, Point
 
+
 @dataclass
 class ModelConfig:
     """Base configuration for pitch control models"""
+
     grid_resolution: tuple[int, int] = (105, 68)
     use_numba: bool = True
     parallel: bool = True
@@ -36,10 +38,12 @@ class OptimizedPitchControlModel(PitchControlModel):
         # This will compile the functions
         try:
             self._calculate_times_vectorized(
-                dummy_positions, dummy_velocities, dummy_grid,
+                dummy_positions,
+                dummy_velocities,
+                dummy_grid,
                 max_speeds=np.array([8.0, 8.0]),
                 accelerations=np.array([4.0, 4.0]),
-                reaction_times=np.array([0.5, 0.5])
+                reaction_times=np.array([0.5, 0.5]),
             )
         except Exception:
             # If compilation fails, fall back to non-numba

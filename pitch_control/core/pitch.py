@@ -2,26 +2,29 @@ from dataclasses import dataclass
 from typing import Tuple, List, Optional
 import numpy as np
 
+
 @dataclass
 class Point:
     """2D point representation"""
+
     x: float
     y: float
 
-    def distance_to(self, other: 'Point') -> float:
+    def distance_to(self, other: "Point") -> float:
         """Euclidean distance to another point"""
         return np.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
 
-    def __add__(self, other: 'Point') -> 'Point':
+    def __add__(self, other: "Point") -> "Point":
         return Point(self.x + other.x, self.y + other.y)
 
-    def __sub__(self, other: 'Point') -> 'Point':
+    def __sub__(self, other: "Point") -> "Point":
         return Point(self.x - other.x, self.y - other.y)
 
 
 @dataclass
 class PitchDimensions:
     """Standard pitch dimensions and coordinate system"""
+
     length: float = 105.0  # meters
     width: float = 68.0  # meters
     origin: str = "center"  # "center", "corner"
@@ -30,8 +33,10 @@ class PitchDimensions:
     def bounds(self) -> Tuple[Tuple[float, float], Tuple[float, float]]:
         """Get pitch boundaries as ((x_min, x_max), (y_min, y_max))"""
         if self.origin == "center":
-            return ((-self.length / 2, self.length / 2),
-                    (-self.width / 2, self.width / 2))
+            return (
+                (-self.length / 2, self.length / 2),
+                (-self.width / 2, self.width / 2),
+            )
         else:  # corner
             return ((0, self.length), (0, self.width))
 
@@ -39,8 +44,11 @@ class PitchDimensions:
 class Pitch:
     """Pitch representation with coordinate system and grid management"""
 
-    def __init__(self, dimensions: PitchDimensions = None,
-                 grid_resolution: Tuple[int, int] = (105, 68)):
+    def __init__(
+        self,
+        dimensions: PitchDimensions = None,
+        grid_resolution: Tuple[int, int] = (105, 68),
+    ):
         """
         Initialize pitch with dimensions and grid.
 
@@ -52,8 +60,9 @@ class Pitch:
         self.grid_resolution = grid_resolution
         self._grid_cache = {}
 
-    def create_grid(self, resolution: Optional[Tuple[int, int]] = None) -> Tuple[
-        np.ndarray, np.ndarray]:
+    def create_grid(
+        self, resolution: Optional[Tuple[int, int]] = None
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Create coordinate grid for pitch control calculations.
 
@@ -83,8 +92,9 @@ class Pitch:
         (x_min, x_max), (y_min, y_max) = self.dimensions.bounds
         return x_min <= point.x <= x_max and y_min <= point.y <= y_max
 
-    def get_grid_points_as_array(self, resolution: Optional[
-        Tuple[int, int]] = None) -> np.ndarray:
+    def get_grid_points_as_array(
+        self, resolution: Optional[Tuple[int, int]] = None
+    ) -> np.ndarray:
         """
         Get all grid points as a flat array for vectorized operations.
 
@@ -99,6 +109,7 @@ class Pitch:
 @dataclass
 class ControlSurface:
     """Represents calculated pitch control probabilities"""
+
     home_control: np.ndarray
     away_control: np.ndarray
     grid_x: np.ndarray
@@ -127,5 +138,3 @@ class ControlSurface:
         y_idx = np.argmin(np.abs(self.grid_y[:, 0] - point.y))
 
         return self.home_control[y_idx, x_idx], self.away_control[y_idx, x_idx]
-
-

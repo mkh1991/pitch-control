@@ -65,22 +65,22 @@ def compare_backends():
     grid_sizes = [r[0] * r[1] for r in resolutions]
 
     # Time comparison
-    ax1.plot(grid_sizes, numba_times, 'ro-', label='Numba', linewidth=2)
-    ax1.plot(grid_sizes, numpy_times, 'bo-', label='NumPy', linewidth=2)
-    ax1.set_xlabel('Grid Points')
-    ax1.set_ylabel('Calculation Time (seconds)')
-    ax1.set_title('Performance Comparison')
+    ax1.plot(grid_sizes, numba_times, "ro-", label="Numba", linewidth=2)
+    ax1.plot(grid_sizes, numpy_times, "bo-", label="NumPy", linewidth=2)
+    ax1.set_xlabel("Grid Points")
+    ax1.set_ylabel("Calculation Time (seconds)")
+    ax1.set_title("Performance Comparison")
     ax1.legend()
     ax1.grid(True, alpha=0.3)
 
     # Speedup
     speedups = [n / nb for n, nb in zip(numpy_times, numba_times)]
-    ax2.plot(grid_sizes, speedups, 'go-', linewidth=2, markersize=8)
-    ax2.set_xlabel('Grid Points')
-    ax2.set_ylabel('Speedup Factor')
-    ax2.set_title('Numba Speedup vs NumPy')
+    ax2.plot(grid_sizes, speedups, "go-", linewidth=2, markersize=8)
+    ax2.set_xlabel("Grid Points")
+    ax2.set_ylabel("Speedup Factor")
+    ax2.set_title("Numba Speedup vs NumPy")
     ax2.grid(True, alpha=0.3)
-    ax2.axhline(y=1, color='r', linestyle='--', alpha=0.5, label='No speedup')
+    ax2.axhline(y=1, color="r", linestyle="--", alpha=0.5, label="No speedup")
     ax2.legend()
 
     plt.tight_layout()
@@ -99,8 +99,8 @@ def test_scalability():
     model = SpearmanModel(config=config, pitch=pitch)
 
     # Ensure we always have players from both teams
-    home_players = [p for p in base_players if p.team == 'Home']
-    away_players = [p for p in base_players if p.team == 'Away']
+    home_players = [p for p in base_players if p.team == "Home"]
+    away_players = [p for p in base_players if p.team == "Away"]
 
     # Test with balanced teams
     team_sizes = [4, 6, 8, 11]  # Players per team
@@ -130,21 +130,27 @@ def test_scalability():
 
         points_per_sec = (84 * 54 * n_players) / avg_time
         print(
-            f"  {n_players:2d} players ({team_size}v{team_size}): {avg_time:.3f}s ({points_per_sec:.0f} calculations/sec)")
+            f"  {n_players:2d} players ({team_size}v{team_size}): {avg_time:.3f}s ({points_per_sec:.0f} calculations/sec)"
+        )
 
     # Plot scalability
     plt.figure(figsize=(8, 6))
-    plt.plot(player_counts, times, 'bo-', linewidth=2, markersize=8)
-    plt.xlabel('Number of Players')
-    plt.ylabel('Calculation Time (seconds)')
-    plt.title('Performance Scalability')
+    plt.plot(player_counts, times, "bo-", linewidth=2, markersize=8)
+    plt.xlabel("Number of Players")
+    plt.ylabel("Calculation Time (seconds)")
+    plt.title("Performance Scalability")
     plt.grid(True, alpha=0.3)
 
     # Add trend line
     z = np.polyfit(player_counts, times, 1)
     p = np.poly1d(z)
-    plt.plot(player_counts, p(player_counts), "r--", alpha=0.8,
-             label=f'Linear fit (slope: {z[0]:.4f})')
+    plt.plot(
+        player_counts,
+        p(player_counts),
+        "r--",
+        alpha=0.8,
+        label=f"Linear fit (slope: {z[0]:.4f})",
+    )
     plt.legend()
     plt.show()
 
@@ -183,8 +189,10 @@ def memory_usage_test():
         grid_points = res[0] * res[1]
         memory_per_point = memory_used / grid_points * 1024  # KB per grid point
 
-        print(f"  {res[0]:3d}x{res[1]:3d} ({grid_points:6d} points): "
-              f"{memory_used:5.1f}MB ({memory_per_point:.2f}KB/point)")
+        print(
+            f"  {res[0]:3d}x{res[1]:3d} ({grid_points:6d} points): "
+            f"{memory_used:5.1f}MB ({memory_per_point:.2f}KB/point)"
+        )
 
         # Clean up
         del model, result

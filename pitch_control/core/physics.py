@@ -8,13 +8,15 @@ from .player import PlayerState
 @dataclass
 class BallPhysics:
     """Ball movement physics parameters"""
+
     max_speed: float = 30.0  # m/s (professional kick)
     air_resistance: float = 0.05  # drag coefficient
     gravity: float = 9.81  # m/s² (for trajectory calculations)
     bounce_factor: float = 0.7  # energy retained after bounce
 
-    def trajectory_time(self, start: Point, end: Point,
-                        initial_speed: float = 15.0) -> float:
+    def trajectory_time(
+        self, start: Point, end: Point, initial_speed: float = 15.0
+    ) -> float:
         """
         Calculate time for ball to travel from start to end.
 
@@ -37,12 +39,13 @@ class BallPhysics:
         ratio = k * distance / initial_speed
         if ratio >= 1.0:
             # Ball doesn't have enough speed to reach target
-            return float('inf')
+            return float("inf")
 
         return -np.log(1 - ratio) / k
 
-    def reachable_area(self, current_pos: Point, time_horizon: float = 3.0,
-                       initial_speed: float = 15.0) -> float:
+    def reachable_area(
+        self, current_pos: Point, time_horizon: float = 3.0, initial_speed: float = 15.0
+    ) -> float:
         """
         Calculate maximum distance ball can travel in given time.
 
@@ -63,9 +66,9 @@ class PhysicsEngine:
     def __init__(self, ball_physics: BallPhysics = None):
         self.ball_physics = ball_physics or BallPhysics()
 
-    def calculate_interception_times(self, players: List[PlayerState],
-                                     target: Point,
-                                     ball_arrival_time: float = 0.0) -> np.ndarray:
+    def calculate_interception_times(
+        self, players: List[PlayerState], target: Point, ball_arrival_time: float = 0.0
+    ) -> np.ndarray:
         """
         Calculate interception times for all players to a target point.
 
@@ -83,9 +86,9 @@ class PhysicsEngine:
 
         return times
 
-    def find_controlling_player(self, players: List[PlayerState],
-                                target: Point, ball_arrival_time: float = 0.0) -> Tuple[
-        int, float]:
+    def find_controlling_player(
+        self, players: List[PlayerState], target: Point, ball_arrival_time: float = 0.0
+    ) -> Tuple[int, float]:
         """
         Find which player is most likely to control the ball at target.
 
@@ -100,7 +103,7 @@ class PhysicsEngine:
 
         # Find second fastest for probability calculation
         times_sorted = np.sort(times)
-        second_fastest_time = times_sorted[1] if len(times_sorted) > 1 else float('inf')
+        second_fastest_time = times_sorted[1] if len(times_sorted) > 1 else float("inf")
 
         # Calculate control probability
         control_prob = players[fastest_idx].control_probability(

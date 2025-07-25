@@ -12,6 +12,7 @@ from .base import OptimizedPitchControlModel, ModelConfig
 @dataclass
 class SpearmanConfig(ModelConfig):
     """Configuration for Spearman pitch control model"""
+
     sigma: float = 0.45  # Controls steepness of probability curve
     lambda_att: float = 4.3  # Attacking advantage parameter
     lambda_def: float = 4.3  # Defensive advantage parameter
@@ -21,8 +22,14 @@ class SpearmanConfig(ModelConfig):
 
 # Numba-compiled functions for maximum performance
 @jit(nopython=True, parallel=True, cache=True)
-def _calculate_times_vectorized(player_positions, player_velocities, grid_points,
-                                max_speeds, accelerations, reaction_times):
+def _calculate_times_vectorized(
+    player_positions,
+    player_velocities,
+    grid_points,
+    max_speeds,
+    accelerations,
+    reaction_times,
+):
     """
     Vectorized calculation of time-to-intercept for all players to all grid points.
 
@@ -84,8 +91,10 @@ def _calculate_times_vectorized(player_positions, player_velocities, grid_points
             else:
                 # Time to reach max speed
                 time_to_max_speed = speed_diff / acceleration
-                distance_during_accel = (vel_toward_target * time_to_max_speed +
-                                         0.5 * acceleration * time_to_max_speed * time_to_max_speed)
+                distance_during_accel = (
+                    vel_toward_target * time_to_max_speed
+                    + 0.5 * acceleration * time_to_max_speed * time_to_max_speed
+                )
 
                 if distance_during_accel >= remaining_distance:
                     # Reach target before max speed
@@ -202,8 +211,9 @@ class SpearmanModel(OptimizedPitchControlModel):
         if config.use_numba:
             self._warm_up_numba()
 
-    def _prepare_player_data(self, players: List[PlayerState]) -> Tuple[
-        np.ndarray, ...]:
+    def _prepare_player_data(
+        self, players: List[PlayerState]
+    ) -> Tuple[np.ndarray, ...]:
         """
         Convert player list to vectorized arrays for fast computation.
 
@@ -224,15 +234,24 @@ class SpearmanModel(OptimizedPitchControlModel):
             positions[i] = [player.position.x, player.position.y]
             velocities[i] = [player.velocity.x, player.velocity.y]
             max_speeds[i] = player.physics.max_speed * player.physics.fatigue_factor
-            accelerations[
-                i] = player.physics.acceleration * player.physics.fatigue_factor
+            accelerations[i] = (
+                player.physics.acceleration * player.physics.fatigue_factor
+            )
             reaction_times[i] = player.physics.reaction_time
-            team_ids[i] = 0 if player.team.lower() == 'home' else 1
+            team_ids[i] = 0 if player.team.lower() == "home" else 1
 
-        return positions, velocities, max_speeds, accelerations, reaction_times, team_ids
+        return (
+            positions,
+            velocities,
+            max_speeds,
+            accelerations,
+            reaction_times,
+            team_ids,
+        )
 
-    def calculate(self, players: List[PlayerState], ball_position: Point,
-                  **kwargs) -> PitchControlResult:
+    def calculate(
+        self, players: List[PlayerState], ball_position: Point, **kwargs
+    ) -> PitchControlResult:
         """
         Calculate pitch control using vectorized Spearman model.
 
@@ -254,19 +273,28 @@ class SpearmanModel(OptimizedPitchControlModel):
         grid_points = np.column_stack([grid_x.ravel(), grid_y.ravel()])
 
         # Prepare player data for vectorized operations
-        (positions, velocities, max_speeds, accelerations,
-         reaction_times, team_ids) = self._prepare_player_data(players)
+        (positions, velocities, max_speeds, accelerations, reaction_times, team_ids) = (
+            self._prepare_player_data(players)
+        )
 
         # Calculate player arrival times (vectorized)
         if self.config.use_numba:
             player_times = _calculate_times_vectorized(
-                positions, velocities, grid_points,
-                max_speeds, accelerations, reaction_times
+                positions,
+                velocities,
+                grid_points,
+                max_speeds,
+                accelerations,
+                reaction_times,
             )
         else:
             player_times = self._calculate_times_numpy(
-                positions, velocities, grid_points,
-                max_speeds, accelerations, reaction_times
+                positions,
+                velocities,
+                grid_points,
+                max_speeds,
+                accelerations,
+                reaction_times,
             )
 
         # Calculate ball travel times
@@ -302,28 +330,35 @@ class SpearmanModel(OptimizedPitchControlModel):
             away_control=away_control,
             grid_x=grid_x,
             grid_y=grid_y,
-            timestamp=kwargs.get('timestamp', 0.0)
+            timestamp=kwargs.get("timestamp", 0.0),
         )
 
         calculation_time = time.time() - start_time
 
         metadata = {
-            'model': 'Spearman',
-            'grid_resolution': self.config.grid_resolution,
-            'n_players': len(players),
-            'use_numba': self.config.use_numba,
-            'ball_position': (ball_position.x, ball_position.y),
-            'config': self.spearman_config
+            "model": "Spearman",
+            "grid_resolution": self.config.grid_resolution,
+            "n_players": len(players),
+            "use_numba": self.config.use_numba,
+            "ball_position": (ball_position.x, ball_position.y),
+            "config": self.spearman_config,
         }
 
         return PitchControlResult(
             control_surface=control_surface,
             calculation_time=calculation_time,
-            metadata=metadata
+            metadata=metadata,
         )
 
-    def _calculate_times_numpy(self, positions, velocities, grid_points,
-                               max_speeds, accelerations, reaction_times):
+    def _calculate_times_numpy(
+        self,
+        positions,
+        velocities,
+        grid_points,
+        max_speeds,
+        accelerations,
+        reaction_times,
+    ):
         """NumPy fallback for time calculations (slower than Numba)"""
         n_players, _ = positions.shape
         n_grid, _ = grid_points.shape
@@ -335,7 +370,7 @@ class SpearmanModel(OptimizedPitchControlModel):
 
         # Calculate distances: (n_players, n_grid)
         diff = grid_expanded - pos_expanded
-        distances = np.sqrt(np.sum(diff ** 2, axis=2))
+        distances = np.sqrt(np.sum(diff**2, axis=2))
 
         # Direction vectors: (n_players, n_grid, 2)
         directions = np.zeros_like(diff)
@@ -351,11 +386,13 @@ class SpearmanModel(OptimizedPitchControlModel):
         remaining_distances = np.maximum(0, distances - reaction_distances)
 
         # Simplified time calculation (can be made more sophisticated)
-        effective_speeds = np.minimum(max_speeds[:, np.newaxis],
-                                      vel_toward + accelerations[:, np.newaxis] * 2.0)
+        effective_speeds = np.minimum(
+            max_speeds[:, np.newaxis], vel_toward + accelerations[:, np.newaxis] * 2.0
+        )
 
-        times = (reaction_times[:, np.newaxis] +
-                 remaining_distances / np.maximum(effective_speeds, 0.1))
+        times = reaction_times[:, np.newaxis] + remaining_distances / np.maximum(
+            effective_speeds, 0.1
+        )
 
         return times
 
@@ -387,7 +424,8 @@ class SpearmanModel(OptimizedPitchControlModel):
             else:
                 time_diff = min_away - min_home
                 home_prob = 1.0 / (
-                            1.0 + np.exp(-time_diff / self.spearman_config.sigma))
+                    1.0 + np.exp(-time_diff / self.spearman_config.sigma)
+                )
 
             home_control[g] = home_prob
             away_control[g] = 1.0 - home_prob

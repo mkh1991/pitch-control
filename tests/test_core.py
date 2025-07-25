@@ -1,7 +1,13 @@
 import pytest
 import numpy as np
-from pitch_control.core import Player, PlayerState, Point, Pitch, PlayerPhysics, \
-    Position
+from pitch_control.core import (
+    Player,
+    PlayerState,
+    Point,
+    Pitch,
+    PlayerPhysics,
+    Position,
+)
 
 
 class TestPoint:
@@ -34,8 +40,12 @@ class TestPlayerPhysics:
 class TestPlayerState:
     def test_time_to_intercept_stationary(self):
         player = PlayerState(
-            player_id="test", position=Point(0, 0), velocity=Point(0, 0),
-            team="Home", jersey_number=1, position_type=Position.CM
+            player_id="test",
+            position=Point(0, 0),
+            velocity=Point(0, 0),
+            team="Home",
+            jersey_number=1,
+            position_type=Position.CM,
         )
 
         target = Point(10, 0)  # 10 meters away
@@ -47,8 +57,12 @@ class TestPlayerState:
 
     def test_control_probability(self):
         player = PlayerState(
-            player_id="test", position=Point(0, 0), velocity=Point(0, 0),
-            team="Home", jersey_number=1, position_type=Position.CM
+            player_id="test",
+            position=Point(0, 0),
+            velocity=Point(0, 0),
+            team="Home",
+            jersey_number=1,
+            position_type=Position.CM,
         )
 
         target = Point(1, 0)

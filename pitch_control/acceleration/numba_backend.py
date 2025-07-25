@@ -14,6 +14,7 @@ class NumbaBackend:
     def is_available() -> bool:
         """Check if Numba is available and working"""
         try:
+
             @jit(nopython=True)
             def test_func(x):
                 return x + 1
@@ -36,6 +37,5 @@ class NumbaBackend:
         dummy_reaction = np.array([0.5])
 
         _calculate_times_vectorized(
-            dummy_pos, dummy_vel, dummy_grid,
-            dummy_speeds, dummy_accel, dummy_reaction
+            dummy_pos, dummy_vel, dummy_grid, dummy_speeds, dummy_accel, dummy_reaction
         )

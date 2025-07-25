@@ -10,6 +10,7 @@ from .physics import PhysicsEngine
 @dataclass
 class PitchControlResult:
     """Result of pitch control calculation"""
+
     control_surface: ControlSurface
     calculation_time: float
     metadata: Dict[str, Any]
@@ -37,8 +38,9 @@ class PitchControlModel(ABC):
         self.config = {}
 
     @abstractmethod
-    def calculate(self, players: List[PlayerState],
-                  ball_position: Point, **kwargs) -> PitchControlResult:
+    def calculate(
+        self, players: List[PlayerState], ball_position: Point, **kwargs
+    ) -> PitchControlResult:
         """
         Calculate pitch control for given game state.
 
