@@ -92,7 +92,7 @@ def main():
     # Create pitch and model
     pitch = Pitch()
     config = SpearmanConfig(
-        grid_resolution=(105*2, 68*2),  # Reduced for faster calculation
+        grid_resolution=(105 * 2, 68 * 2),  # Reduced for faster calculation
         use_numba=True,
         parallel=True,
     )

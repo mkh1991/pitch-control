@@ -5,8 +5,8 @@ import numpy as np
 import numba
 from numba import jit, prange
 
-from ..acceleration import NumpyVectorizedBackend
-from ..core import PlayerState, Point, ControlSurface, PitchControlResult
+from ..speedup import NumpyVectorizedBackend
+from ..core import PlayerState, Point, ControlSurface, PitchControlResult, Pitch
 from .base import OptimizedPitchControlModel, ModelConfig
 
 
@@ -205,6 +205,8 @@ class SpearmanModel(OptimizedPitchControlModel):
 
     def __init__(self, config: SpearmanConfig = None, **kwargs):
         config = config or SpearmanConfig()
+        if "pitch" not in kwargs:
+            kwargs["pitch"] = Pitch()
         super().__init__(config, **kwargs)
         self.spearman_config = config
 
@@ -251,14 +253,14 @@ class SpearmanModel(OptimizedPitchControlModel):
         )
 
     def _calculate_times_vectorized(
-            self,
-            positions,
-            velocities,
-            grid_points,
-            max_speeds,
-            accelerations,
-            reaction_times,
-            ):
+        self,
+        positions,
+        velocities,
+        grid_points,
+        max_speeds,
+        accelerations,
+        reaction_times,
+    ):
         return _calculate_times_vectorized(
             positions,
             velocities,

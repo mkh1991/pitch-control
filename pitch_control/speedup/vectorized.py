@@ -112,4 +112,3 @@ class NumpyVectorizedBackend:
         """Calculate ball travel times using pure NumPy"""
         distances = np.sqrt(np.sum((grid_points - ball_position) ** 2, axis=1))
         return distances / ball_speed
-
