@@ -9,7 +9,7 @@ from typing import List, Tuple
 from ..core import PlayerState, Point
 
 
-class VectorizedBackend:
+class NumpyVectorizedBackend:
     """Pure NumPy vectorized computation backend (no JIT compilation)"""
 
     @staticmethod
@@ -17,17 +17,20 @@ class VectorizedBackend:
         """Check if NumPy is available (should always be True)"""
         try:
             import numpy
+
             return True
         except ImportError:
             return False
 
     @staticmethod
-    def calculate_times_vectorized(player_positions: np.ndarray,
-                                   player_velocities: np.ndarray,
-                                   grid_points: np.ndarray,
-                                   max_speeds: np.ndarray,
-                                   accelerations: np.ndarray,
-                                   reaction_times: np.ndarray) -> np.ndarray:
+    def calculate_times_vectorized(
+        player_positions: np.ndarray,
+        player_velocities: np.ndarray,
+        grid_points: np.ndarray,
+        max_speeds: np.ndarray,
+        accelerations: np.ndarray,
+        reaction_times: np.ndarray,
+    ) -> np.ndarray:
         """
         Pure NumPy implementation of time-to-intercept calculations.
 
@@ -43,7 +46,7 @@ class VectorizedBackend:
 
         # Calculate distances: (n_players, n_grid)
         diff = grid_expanded - pos_expanded
-        distances = np.sqrt(np.sum(diff ** 2, axis=2))
+        distances = np.sqrt(np.sum(diff**2, axis=2))
 
         # Avoid division by zero
         distances = np.maximum(distances, 1e-6)
@@ -61,12 +64,15 @@ class VectorizedBackend:
 
         # Simplified acceleration model (vectorized)
         speed_diff = max_speeds[:, np.newaxis] - vel_toward
-        time_to_max_speed = np.maximum(0, speed_diff / np.maximum(
-            accelerations[:, np.newaxis], 0.1))
+        time_to_max_speed = np.maximum(
+            0, speed_diff / np.maximum(accelerations[:, np.newaxis], 0.1)
+        )
 
         # Distance covered during acceleration
-        accel_distance = (vel_toward * time_to_max_speed +
-                          0.5 * accelerations[:, np.newaxis] * time_to_max_speed ** 2)
+        accel_distance = (
+            vel_toward * time_to_max_speed
+            + 0.5 * accelerations[:, np.newaxis] * time_to_max_speed**2
+        )
 
         # Where we reach target before max speed
         before_max_mask = accel_distance >= remaining_distances
@@ -77,13 +83,13 @@ class VectorizedBackend:
         b_coeff = vel_toward
         c_coeff = -remaining_distances
 
-        discriminant = b_coeff ** 2 + 4 * a_coeff * c_coeff
+        discriminant = b_coeff**2 + 4 * a_coeff * c_coeff
         discriminant = np.maximum(discriminant, 0)  # Avoid negative sqrt
 
         time_accel = np.where(
             a_coeff > 1e-6,
             (-b_coeff + np.sqrt(discriminant)) / (2 * a_coeff),
-            remaining_distances / np.maximum(vel_toward, 0.1)
+            remaining_distances / np.maximum(vel_toward, 0.1),
         )
 
         # Case 2: Accelerate to max speed, then constant speed
@@ -100,17 +106,17 @@ class VectorizedBackend:
         return total_time
 
     @staticmethod
-    def calculate_ball_travel_times(ball_position: np.ndarray,
-                                    grid_points: np.ndarray,
-                                    ball_speed: float) -> np.ndarray:
+    def calculate_ball_travel_times(
+        ball_position: np.ndarray, grid_points: np.ndarray, ball_speed: float
+    ) -> np.ndarray:
         """Calculate ball travel times using pure NumPy"""
         distances = np.sqrt(np.sum((grid_points - ball_position) ** 2, axis=1))
         return distances / ball_speed
 
     @staticmethod
-    def calculate_control_probabilities(player_times: np.ndarray,
-                                        team_ids: np.ndarray,
-                                        sigma: float) -> Tuple[np.ndarray, np.ndarray]:
+    def calculate_control_probabilities(
+        player_times: np.ndarray, team_ids: np.ndarray, sigma: float
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Calculate control probabilities using pure NumPy"""
         n_players, n_grid = player_times.shape
         home_control = np.zeros(n_grid)

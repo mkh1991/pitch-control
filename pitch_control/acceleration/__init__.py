@@ -6,6 +6,6 @@ Different computation backends for high-performance pitch control calculations.
 """
 
 from .numba_backend import NumbaBackend
-from .vectorized import VectorizedBackend
+from .vectorized import NumpyVectorizedBackend
 
-__all__ = ["NumbaBackend", "VectorizedBackend"]
+__all__ = ["NumbaBackend", "NumpyVectorizedBackend"]

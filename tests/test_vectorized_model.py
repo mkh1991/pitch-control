@@ -1,8 +1,14 @@
 import pytest
 import numpy as np
 import time
-from pitch_control.core import Player, PlayerState, Point, Pitch, PlayerPhysics, \
-    Position
+from pitch_control.core import (
+    Player,
+    PlayerState,
+    Point,
+    Pitch,
+    PlayerPhysics,
+    Position,
+)
 from pitch_control.models import SpearmanModel, SpearmanConfig
 
 
@@ -20,7 +26,7 @@ class TestSpearmanModel:
             PlayerState("H1", Point(-10, 0), Point(2, 0), "Home", 1, Position.CM),
             PlayerState("H2", Point(-5, 5), Point(1, -1), "Home", 2, Position.FW),
             PlayerState("A1", Point(10, 0), Point(-2, 0), "Away", 1, Position.CM),
-            PlayerState("A2", Point(5, -5), Point(-1, 1), "Away", 2, Position.FW)
+            PlayerState("A2", Point(5, -5), Point(-1, 1), "Away", 2, Position.FW),
         ]
 
         ball_position = Point(0, 0)
@@ -36,14 +42,16 @@ class TestSpearmanModel:
         # Check result structure
         assert result.control_surface is not None
         assert result.calculation_time > 0
-        assert 'model' in result.metadata
-        assert result.metadata['model'] == 'Spearman'
+        assert "model" in result.metadata
+        assert result.metadata["model"] == "Spearman"
 
         # Check control surface properties
         surface = result.control_surface
         assert surface.home_control.shape == surface.away_control.shape
-        assert surface.home_control.shape == (14,
-                                              21)  # grid_resolution swapped due to meshgrid
+        assert surface.home_control.shape == (
+            14,
+            21,
+        )  # grid_resolution swapped due to meshgrid
 
         # Probabilities should sum to 1 (approximately)
         total_control = surface.home_control + surface.away_control
@@ -71,13 +79,15 @@ class TestSpearmanModel:
         np.testing.assert_allclose(
             result_numba.control_surface.home_control,
             result_numpy.control_surface.home_control,
-            rtol=1e-10, atol=1e-12
+            rtol=1e-10,
+            atol=1e-12,
         )
 
         np.testing.assert_allclose(
             result_numba.control_surface.away_control,
             result_numpy.control_surface.away_control,
-            rtol=1e-10, atol=1e-12
+            rtol=1e-10,
+            atol=1e-12,
         )
 
     def test_performance_improvement(self, basic_setup):
@@ -108,7 +118,8 @@ class TestSpearmanModel:
 
         speedup = numpy_time / numba_time
         print(
-            f"Speedup: {speedup:.1f}x (Numba: {numba_time:.3f}s, NumPy: {numpy_time:.3f}s)")
+            f"Speedup: {speedup:.1f}x (Numba: {numba_time:.3f}s, NumPy: {numpy_time:.3f}s)"
+        )
 
         # Numba should be faster (at least 1.5x for this grid size)
         assert speedup > 1.5, f"Expected speedup > 1.5x, got {speedup:.1f}x"
@@ -138,17 +149,24 @@ class TestSpearmanModel:
         # Increase home team velocities toward ball
         modified_players = []
         for player in players:
-            if player.team == 'Home':
+            if player.team == "Home":
                 # Velocity toward ball
-                direction = Point(ball_position.x - player.position.x,
-                                  ball_position.y - player.position.y)
+                direction = Point(
+                    ball_position.x - player.position.x,
+                    ball_position.y - player.position.y,
+                )
                 norm = max(direction.distance_to(Point(0, 0)), 1e-6)
                 new_velocity = Point(direction.x / norm * 5, direction.y / norm * 5)
 
                 modified_player = PlayerState(
-                    player.player_id, player.position, new_velocity,
-                    player.team, player.jersey_number, player.position_type,
-                    player.physics, player.timestamp
+                    player.player_id,
+                    player.position,
+                    new_velocity,
+                    player.team,
+                    player.jersey_number,
+                    player.position_type,
+                    player.physics,
+                    player.timestamp,
                 )
                 modified_players.append(modified_player)
             else:
@@ -180,9 +198,14 @@ class TestSpearmanModel:
         stationary_players = []
         for player in players:
             stationary_player = PlayerState(
-                player.player_id, player.position, Point(0, 0),
-                player.team, player.jersey_number, player.position_type,
-                player.physics, player.timestamp
+                player.player_id,
+                player.position,
+                Point(0, 0),
+                player.team,
+                player.jersey_number,
+                player.position_type,
+                player.physics,
+                player.timestamp,
             )
             stationary_players.append(stationary_player)
 
@@ -194,7 +217,7 @@ class TestSpearmanModel:
         pitch = Pitch()
         players = [
             PlayerState("H1", Point(-5, 0), Point(1, 0), "Home", 1, Position.CM),
-            PlayerState("A1", Point(5, 0), Point(-1, 0), "Away", 1, Position.CM)
+            PlayerState("A1", Point(5, 0), Point(-1, 0), "Away", 1, Position.CM),
         ]
         ball_position = Point(0, 0)
 
@@ -210,8 +233,7 @@ class TestSpearmanModel:
 
         # Different sigma should give different results
         assert not np.allclose(
-            result1.control_surface.home_control,
-            result2.control_surface.home_control
+            result1.control_surface.home_control, result2.control_surface.home_control
         )
 
         # Lower sigma should create sharper boundaries
@@ -226,14 +248,20 @@ class TestSpearmanModel:
         result = model.calculate(players, ball_position, timestamp=123.45)
 
         metadata = result.metadata
-        required_keys = ['model', 'grid_resolution', 'n_players', 'use_numba',
-                         'ball_position', 'config']
+        required_keys = [
+            "model",
+            "grid_resolution",
+            "n_players",
+            "use_numba",
+            "ball_position",
+            "config",
+        ]
 
         for key in required_keys:
             assert key in metadata, f"Missing metadata key: {key}"
 
-        assert metadata['model'] == 'Spearman'
-        assert metadata['n_players'] == len(players)
-        assert metadata['ball_position'] == (ball_position.x, ball_position.y)
-        assert isinstance(metadata['config'], SpearmanConfig)
+        assert metadata["model"] == "Spearman"
+        assert metadata["n_players"] == len(players)
+        assert metadata["ball_position"] == (ball_position.x, ball_position.y)
+        assert isinstance(metadata["config"], SpearmanConfig)
         assert result.control_surface.timestamp == 123.45

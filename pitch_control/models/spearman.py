@@ -5,6 +5,7 @@ import numpy as np
 import numba
 from numba import jit, prange
 
+from ..acceleration import NumpyVectorizedBackend
 from ..core import PlayerState, Point, ControlSurface, PitchControlResult
 from .base import OptimizedPitchControlModel, ModelConfig
 
@@ -288,7 +289,7 @@ class SpearmanModel(OptimizedPitchControlModel):
                 reaction_times,
             )
         else:
-            player_times = self._calculate_times_numpy(
+            player_times = NumpyVectorizedBackend.calculate_times_vectorized(
                 positions,
                 velocities,
                 grid_points,
