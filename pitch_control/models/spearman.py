@@ -280,7 +280,6 @@ class SpearmanModel(OptimizedPitchControlModel):
 
         # Calculate player arrival times (vectorized)
         if self.config.use_numba:
-            print("USING NUMBA")
             player_times = _calculate_times_vectorized(
                 positions,
                 velocities,
@@ -290,7 +289,6 @@ class SpearmanModel(OptimizedPitchControlModel):
                 reaction_times,
             )
         else:
-            print("USING NUMPY")
             player_times = NumpyVectorizedBackend.calculate_times_vectorized(
                 positions,
                 velocities,
