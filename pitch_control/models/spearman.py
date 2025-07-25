@@ -67,7 +67,6 @@ def _calculate_times_vectorized(
                 sprint_time = distance / max(max_speed, 0.1)
                 times[p, g] = reaction_time + sprint_time
             else:
-                # Optional: include acceleration (but Laurie doesn't use this)
                 time_to_max_speed = max_speed / acceleration
                 distance_during_accel = 0.5 * acceleration * time_to_max_speed * time_to_max_speed
 
@@ -294,19 +293,19 @@ class SpearmanModel(OptimizedPitchControlModel):
         # Adjust player times for ball travel time
         adjusted_times = player_times + ball_times[np.newaxis, :]
 
-        home_control_flat, away_control_flat = _calculate_control_probabilities(
-            adjusted_times, team_ids, self.spearman_config.sigma
-        )
+        # home_control_flat, away_control_flat = _calculate_control_probabilities(
+        #     adjusted_times, team_ids, self.spearman_config.sigma
+        # )
 
-        # # Calculate control probabilities
-        # if self.config.use_numba:
-        #     home_control_flat, away_control_flat = _calculate_control_probabilities(
-        #         adjusted_times, team_ids, self.spearman_config.sigma
-        #     )
-        # else:
-        #     home_control_flat, away_control_flat = self._calculate_probabilities_numpy(
-        #         adjusted_times, team_ids
-        #     )
+        # Calculate control probabilities
+        if self.config.use_numba:
+            home_control_flat, away_control_flat = _calculate_control_probabilities(
+                adjusted_times, team_ids, self.spearman_config.sigma
+            )
+        else:
+            home_control_flat, away_control_flat = self._calculate_probabilities_numpy(
+                adjusted_times, team_ids
+            )
 
         # Reshape to grid
         grid_shape = grid_x.shape
