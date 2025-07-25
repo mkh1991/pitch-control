@@ -1,12 +1,13 @@
 ## pitch-control
 
-A modern, high-performance Python library for calculating pitch control in football (soccer) using advanced vectorization and just-in-time compilation.
-Based on [Laurie Shaw's](https://github.com/Friends-of-Tracking-Data-FoTD/LaurieOnTracking/tree/master) implementation of the Spearman model.
-Currently only supports the Spearman physics-based model.
+A high-performance Python library for calculating pitch control in football (soccer) using NumPy vectorization and additional speed-ups upto 10x with Numba.
+Based on [Laurie Shaw's](https://github.com/Friends-of-Tracking-Data-FoTD/LaurieOnTracking/tree/master) implementation of the Spearman physics-based model, which is the 
+only currently supported model. It also implements a simple model of acceleration if provided for player times calculation.
+
 
 ## Features
 
-🚀 **High Performance**: <X> speedup using Numba JIT compilation  
+🚀 **High Performance**: 10x speedup using Numba JIT compilation  
 ⚡ **Vectorized Operations**: Efficient NumPy-based calculations  
 🧠 **Realistic Physics**: Proper acceleration, reaction times, position-specific parameters  
 🎛️ **Configurable**: Easy to customize parameters and behavior  
@@ -41,7 +42,7 @@ print(f"Home team controls {result.get_team_control_percentage('home'):.1f}% of 
 
 ```bash
 # Using uv (recommended)
-git clone https://github.com/username/pitch-control
+git clone https://github.com/mkh1991/pitch-control
 cd pitch-control
 uv sync --all-extras
 
@@ -61,8 +62,11 @@ uv add plotly bokeh   # For advanced visualizations
 ```bash
 # Run the main example with sample players
 uv run python examples/basic_example.py
+```
 
-# Expected output:
+Expected output should look something like this:
+
+```bash
 # Setting up pitch control calculation...
 # Created 22 players (11 home, 11 away)
 # Calculating pitch control...
@@ -131,17 +135,38 @@ Coverage report: htmlcov/index.html (90%+ expected)
 # Run focused performance tests
 uv run python -m pytest tests/test_vectorized_model.py::TestSpearmanModel::test_performance_improvement -v -s
 
-# Expected: Numba should be 1.5x+ faster than NumPy for medium grids
-# Actual speedup varies by hardware (typically 10-50x)
 ```
 
 ## Performance
 
-On a modern laptop with the default grid (105x68):
+On my Macbook Air M3 laptop (16 GB RAM), with the default grid (105x68):
 
-- **22 players**: ~0.01-0.02 seconds  
-- **Numba speedup**: 10-50x vs pure NumPy
+- **22 players**: ~0.4-1 ms with Numba,  
+- **Numba speedup**: 10x vs pure NumPy
 - **Memory usage**: <100MB for full game analysis
+
+
+```bash
+ uv run python examples/performance_comparison.py
+```
+
+```commandline
+COMPARISON SUMMARY:
+==================================================
+Component            NumPy (ms)   Numba (ms)   Speedup   
+------------------------------------------------------
+Physics                   9.5          0.3       33.8x
+Ball                      0.6          0.4        1.7x
+Probability               2.1          0.4        4.9x
+------------------------------------------------------
+TOTAL CORE               12.3          1.1       11.2x
+  Numba:  1.097s
+  NumPy:  12.317s
+  Speedup: 11.2x
+
+```
+
+
 
 ### Benchmarking Your System
 ```bash
@@ -220,8 +245,9 @@ uv add matplotlib    # For visualization
 
 **Performance Issues**:
 - First run is slower (Numba compilation)
-- Subsequent runs should be 10-50x faster
+- Subsequent runs should be around 10x faster
 - Check `result.metadata['use_numba']` to confirm Numba is active
+
 
 ## Documentation
 
