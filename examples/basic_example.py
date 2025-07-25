@@ -69,7 +69,10 @@ def create_sample_players():
         players.append(player_state)
 
     # Away team (right side, mirrored, with some randomness)
-    away_positions = [(x, -y) for x, y in home_positions]  #
+    away_positions = [
+        (x + random.randint(-2, 2), y + random.randint(-5, 5))
+        for x, y in home_positions
+    ]  #
     away_velocities = [(-vx, -vy) for vx, vy in home_velocities]  # Reverse velocities
 
     for i, ((x, y), (vx, vy), pos_type) in enumerate(
@@ -145,7 +148,7 @@ def main():
     ax.scatter(away_x, away_y, c="darkblue", s=60, alpha=0.8, label="Away Players")
 
     # Add velocity vectors
-    for player in players[:6]:  # Show vectors for subset to avoid clutter
+    for player in players:  # Show vectors for subset to avoid clutter
         dx = player.velocity.x * 2  # Scale for visibility
         dy = player.velocity.y * 2
         color = "darkred" if player.team == "Home" else "darkblue"
