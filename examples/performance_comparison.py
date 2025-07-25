@@ -245,8 +245,8 @@ def compare_backends(n_runs=20):
         numba_times.append(numba_time)
         numpy_times.append(numpy_time)
 
-        print(f"  Numba:  {numba_time:.3f}s")
-        print(f"  NumPy:  {numpy_time:.3f}s")
+        print(f"  Numba:  {numba_time:.3f} ms")
+        print(f"  NumPy:  {numpy_time:.3f} ms")
         print(f"  Speedup: {speedup:.1f}x")
 
     # Plot results
@@ -258,7 +258,7 @@ def compare_backends(n_runs=20):
     ax1.plot(grid_sizes, numba_times, "ro-", label="Numba", linewidth=2)
     ax1.plot(grid_sizes, numpy_times, "bo-", label="NumPy", linewidth=2)
     ax1.set_xlabel("Grid Points")
-    ax1.set_ylabel("Calculation Time (seconds)")
+    ax1.set_ylabel("Calculation Time (ms)")
     ax1.set_title("Performance Comparison")
     ax1.legend()
     ax1.grid(True, alpha=0.3)
@@ -327,7 +327,7 @@ def test_scalability():
     plt.figure(figsize=(8, 6))
     plt.plot(player_counts, times, "bo-", linewidth=2, markersize=8)
     plt.xlabel("Number of Players")
-    plt.ylabel("Calculation Time (seconds)")
+    plt.ylabel("Calculation Time (ms)")
     plt.title("Performance Scalability")
     plt.grid(True, alpha=0.3)
 
