@@ -113,20 +113,3 @@ class NumpyVectorizedBackend:
         distances = np.sqrt(np.sum((grid_points - ball_position) ** 2, axis=1))
         return distances / ball_speed
 
-    @staticmethod
-    def calculate_control_probabilities(
-        player_times: np.ndarray, team_ids: np.ndarray, sigma: float
-    ) -> Tuple[np.ndarray, np.ndarray]:
-        """Calculate control probabilities using pure NumPy"""
-        n_players, n_grid = player_times.shape
-        home_control = np.zeros(n_grid)
-        away_control = np.zeros(n_grid)
-
-        home_mask = team_ids == 0
-        away_mask = team_ids == 1
-
-        for g in range(n_grid):
-            home_times = player_times[home_mask, g]
-            away_times = player_times[away_mask, g]
-
-            min_home = np.min(home_times) if len(home_times) > 0 else np.inf

@@ -280,6 +280,7 @@ class SpearmanModel(OptimizedPitchControlModel):
 
         # Calculate player arrival times (vectorized)
         if self.config.use_numba:
+            print("USING NUMBA")
             player_times = _calculate_times_vectorized(
                 positions,
                 velocities,
@@ -289,6 +290,7 @@ class SpearmanModel(OptimizedPitchControlModel):
                 reaction_times,
             )
         else:
+            print("USING NUMPY")
             player_times = NumpyVectorizedBackend.calculate_times_vectorized(
                 positions,
                 velocities,
@@ -310,15 +312,19 @@ class SpearmanModel(OptimizedPitchControlModel):
         # Adjust player times for ball travel time
         adjusted_times = player_times + ball_times[np.newaxis, :]
 
-        # Calculate control probabilities
-        if self.config.use_numba:
-            home_control_flat, away_control_flat = _calculate_control_probabilities(
-                adjusted_times, team_ids, self.spearman_config.sigma
-            )
-        else:
-            home_control_flat, away_control_flat = self._calculate_probabilities_numpy(
-                adjusted_times, team_ids
-            )
+        home_control_flat, away_control_flat = _calculate_control_probabilities(
+            adjusted_times, team_ids, self.spearman_config.sigma
+        )
+
+        # # Calculate control probabilities
+        # if self.config.use_numba:
+        #     home_control_flat, away_control_flat = _calculate_control_probabilities(
+        #         adjusted_times, team_ids, self.spearman_config.sigma
+        #     )
+        # else:
+        #     home_control_flat, away_control_flat = self._calculate_probabilities_numpy(
+        #         adjusted_times, team_ids
+        #     )
 
         # Reshape to grid
         grid_shape = grid_x.shape

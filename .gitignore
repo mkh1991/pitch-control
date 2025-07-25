@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# Coverage files
+.coverage
+
 # Env files
 .env
 
