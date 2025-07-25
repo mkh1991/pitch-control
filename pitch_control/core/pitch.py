@@ -10,7 +10,7 @@ class Point:
     x: float
     y: float
 
-    def distance_to(self, other: "Point") -> float:
+    def distance(self, other: "Point") -> float:
         """Euclidean distance to another point"""
         return np.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
 

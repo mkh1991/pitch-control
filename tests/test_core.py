@@ -14,7 +14,7 @@ class TestPoint:
     def test_distance_calculation(self):
         p1 = Point(0, 0)
         p2 = Point(3, 4)
-        assert p1.distance_to(p2) == 5.0
+        assert p1.distance(p2) == 5.0
 
     def test_point_arithmetic(self):
         p1 = Point(1, 2)

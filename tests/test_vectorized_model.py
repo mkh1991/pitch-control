@@ -155,7 +155,7 @@ class TestSpearmanModel:
                     ball_position.x - player.position.x,
                     ball_position.y - player.position.y,
                 )
-                norm = max(direction.distance_to(Point(0, 0)), 1e-6)
+                norm = max(direction.distance(Point(0, 0)), 1e-6)
                 new_velocity = Point(direction.x / norm * 5, direction.y / norm * 5)
 
                 modified_player = PlayerState(

@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from pitch_control.core import Player, Point, Pitch, PlayerPhysics, Position
 from pitch_control.models import SpearmanModel, SpearmanConfig
 from pitch_control.utils.visualization import plot_combined_control
+import random
 
 
 def create_sample_players():
@@ -67,8 +68,8 @@ def create_sample_players():
         player_state = player.create_state(Point(x, y), Point(vx, vy))
         players.append(player_state)
 
-    # Away team (right side, mirrored)
-    away_positions = [(x, -y) for x, y in home_positions]  # Mirror positions
+    # Away team (right side, mirrored, with some randomness)
+    away_positions = [(x, -y + random.randint(-5, 5)) for x, y in home_positions]  #
     away_velocities = [(-vx, -vy) for vx, vy in home_velocities]  # Reverse velocities
 
     for i, ((x, y), (vx, vy), pos_type) in enumerate(
@@ -91,7 +92,7 @@ def main():
     # Create pitch and model
     pitch = Pitch()
     config = SpearmanConfig(
-        grid_resolution=(84, 54),  # Reduced for faster calculation
+        grid_resolution=(105*2, 68*2),  # Reduced for faster calculation
         use_numba=True,
         parallel=True,
     )

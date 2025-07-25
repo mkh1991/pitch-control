@@ -77,7 +77,7 @@ class PlayerState:
             Time in seconds to reach target
         """
         # Distance to target
-        distance = self.position.distance_to(target)
+        distance = self.position.distance(target)
 
         # Current speed in direction of target
         direction = Point(target.x - self.position.x, target.y - self.position.y)

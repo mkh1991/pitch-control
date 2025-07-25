@@ -22,7 +22,7 @@ class BallPhysics:
 
         Uses simplified physics with air resistance.
         """
-        distance = start.distance_to(end)
+        distance = start.distance(end)
         if distance == 0:
             return 0.0
 
