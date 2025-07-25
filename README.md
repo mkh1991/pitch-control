@@ -1,4 +1,8 @@
+## pitch-control
+
 A modern, high-performance Python library for calculating pitch control in football (soccer) using advanced vectorization and just-in-time compilation.
+Based on [Laurie Shaw's](https://github.com/Friends-of-Tracking-Data-FoTD/LaurieOnTracking/tree/master) implementation of the Spearman model.
+Currently only supports the Spearman physics-based model.
 
 ## Features
 
@@ -176,7 +180,7 @@ print(f'Numba enabled: {result.metadata[\"use_numba\"]}')
 pitch_control/
 ├── core/           # Core abstractions (Player, Pitch, Physics)
 ├── models/         # Pitch control model implementations  
-├── acceleration/   # Performance backends (Numba, GPU)
+├── speedup/   # Performance backends (Numba, GPU (coming soon))
 ├── utils/          # Visualization and analysis tools
 └── api/           # REST API and streaming (coming soon)
 ```
@@ -241,8 +245,8 @@ If you use this library in research, please cite:
 ```bibtex
 @software{pitch_control,
   title={Pitch Control: High-Performance Football Analytics},
-  author={Your Name},
-  year={2024},
+  author={Mayukh Samanta},
+  year={2025},
   url={https://github.com/username/pitch-control}
 }
 ```

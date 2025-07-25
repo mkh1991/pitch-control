@@ -69,7 +69,7 @@ def create_sample_players():
         players.append(player_state)
 
     # Away team (right side, mirrored, with some randomness)
-    away_positions = [(x, -y + random.randint(-5, 5)) for x, y in home_positions]  #
+    away_positions = [(x, -y) for x, y in home_positions]  #
     away_velocities = [(-vx, -vy) for vx, vy in home_velocities]  # Reverse velocities
 
     for i, ((x, y), (vx, vy), pos_type) in enumerate(

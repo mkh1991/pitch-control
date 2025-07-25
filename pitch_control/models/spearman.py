@@ -22,7 +22,7 @@ class SpearmanConfig(ModelConfig):
 
 
 # Numba-compiled functions for maximum performance
-@jit(nopython=True, parallel=True, cache=True)
+@jit(nopython=True, parallel=True, cache=True, fastmath=True)
 def _calculate_times_vectorized(
     player_positions,
     player_velocities,
