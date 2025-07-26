@@ -5,6 +5,15 @@ Based on [Laurie Shaw's](https://github.com/Friends-of-Tracking-Data-FoTD/Laurie
 only currently supported model. It also implements a simple model of acceleration if provided for player times calculation.
 
 
+## What is Pitch Control?
+
+- Simply put, it is the probability that a team (usually the home team, the away will be 1 minus this) 
+will control the ball if it were to show up at that location, given the initial location of the ball, 
+player locations and velocities and other modeling assumptions/parameters.
+- This modeling approach was first suggested by [Spearman](https://www.researchgate.net/publication/334849056_Quantifying_Pitch_Control/link/5d434d0aa6fdcc370a742d04) in 2016
+
+
+
 ## Features
 
 - **High Performance**: 🚀10x speedup using Numba JIT compilation (<1 ms per frame) 
@@ -194,6 +203,7 @@ print(f'Numba enabled: {result.metadata[\"use_numba\"]}')
 - Both Numba and NumPy backends
 
 ### Coming Soon
+- "Relevant" or weighted pitch control, based on the value of the space towards a goal threat
 - Other pitch control models:
   - Fernández & Bornn (2018) - "Wide Open Spaces"
   - KNN-based methods
