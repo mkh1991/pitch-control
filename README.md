@@ -9,9 +9,15 @@ only currently supported model. It also implements a simple model of acceleratio
 
 - Simply put, it is the probability that a team (usually the home team, the away will be 1 minus this) 
 will control the ball if it were to show up at that location, given the initial location of the ball, 
-player locations and velocities and other modeling assumptions/parameters.
+player locations, velocities and other modeling assumptions/parameters.
 - This modeling approach was first suggested by [Spearman](https://www.researchgate.net/publication/334849056_Quantifying_Pitch_Control/link/5d434d0aa6fdcc370a742d04) in 2016
+- It uses the idea of a "pitch control" field, analogous to electromagnetic potential fields in physics, where players closer to the ball and 
+- The physics-based model accounts for player positions, velocities with direction, acceleration and top speed, along with simple ball physics to model the probability of a team getting to the ball from its current location to every other location on the pitch
+- Alternatives include other physics-based models, ML approaches ranging from a simple kNN approach to more complex deep learning models, as well as hybrid approaches
 
+Running the basic example with `uv run python examples/basic_example.py` should give you something like this:
+
+![alt text](assets/spearman_pc_with_pitch.png)
 
 
 ## Features

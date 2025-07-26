@@ -7,7 +7,10 @@ import matplotlib.pyplot as plt
 
 from pitch_control.core import Player, Point, Pitch, PlayerPhysics, Position
 from pitch_control.models import SpearmanModel, SpearmanConfig
-from pitch_control.utils.visualization import plot_combined_control
+from pitch_control.utils.visualization import (
+    plot_combined_control,
+    plot_combined_control_with_pitch,
+)
 import random
 
 
@@ -129,7 +132,7 @@ def main():
 
     # Visualize
     print("Creating visualization...")
-    fig = plot_combined_control(result, "Vectorized Spearman Pitch Control")
+    fig = plot_combined_control_with_pitch(result, "Vectorized Spearman Pitch Control")
 
     # Add ball position
     ax = fig.gca()
