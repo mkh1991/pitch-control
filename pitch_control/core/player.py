@@ -15,7 +15,7 @@ class Position(Enum):
     CM = "Central Midfielder"
     DM = "Defensive Midfielder"
     AM = "Attacking Midfielder"
-    WM = "Wide Midfielder"
+    WI = "Winger"
     FW = "Forward"
     CF = "Centre Forward"
 

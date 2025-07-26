@@ -36,8 +36,8 @@ from pitch_control.core import Player, Point, Pitch, Position
 from pitch_control.models import SpearmanModel
 
 # Create players
-home_player = Player("H1", "Messi", "Home", Position.FW, 10)
-away_player = Player("A1", "Van Dijk", "Away", Position.CB, 4)
+home_player = Player(player_id="H1", name="Thierry Henry", team="Home", position_type=Position.FW, jersey_number=14)
+away_player = Player(player_id="A1", name="Lionel Messi", team="Away", position_type=Position.AM, jersey_number=10)
 
 # Set up game state  
 players = [
