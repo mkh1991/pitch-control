@@ -10,8 +10,8 @@ only currently supported model. It also implements a simple model of acceleratio
 - Simply put, it is the probability that a team (usually the home team, the away will be 1 minus this) 
 will control the ball if it were to show up at that location, given the initial location of the ball, 
 player locations, velocities and other modeling assumptions/parameters.
-- This modeling approach was first suggested by [Spearman](https://www.researchgate.net/publication/334849056_Quantifying_Pitch_Control/link/5d434d0aa6fdcc370a742d04) in 2016
-- It uses the idea of a "pitch control" field, analogous to electromagnetic potential fields in physics, where players closer to the ball and 
+- This modeling approach was first suggested by [Spearman](https://www.researchgate.net/publication/334849056_Quantifying_Pitch_Control&ved=2ahUKEwjX5NmQzdqOAxWlXWwGHapWFtkQFnoECBUQAQ&usg=AOvVaw2t3SxjPT4PJ7Rr52iITQHW) in 2016
+- It uses the idea of a "pitch control" field, analogous to electromagnetic potential fields in physics, where players have a "potential" associated with their ability to control the ball if it were to arrive at any location, based on their location and movement states along with their physical attributes 
 - The physics-based model accounts for player positions, velocities with direction, acceleration and top speed, along with simple ball physics to model the probability of a team getting to the ball from its current location to every other location on the pitch
 - Alternatives include other physics-based models, ML approaches ranging from a simple kNN approach to more complex deep learning models, as well as hybrid approaches
 
@@ -79,7 +79,7 @@ uv add plotly bokeh   # For advanced visualizations
 uv run python examples/basic_example.py
 ```
 
-Expected output should look something like this:
+Expected output should look something like this, along with the plot generated above
 
 ```bash
 # Setting up pitch control calculation...
@@ -209,12 +209,15 @@ print(f'Numba enabled: {result.metadata[\"use_numba\"]}')
 - Both Numba and NumPy backends
 
 ### Coming Soon
+- Support for `kloppy`-supported datasets
+- Smoothing of tracking data
+- Video and animation for entire games
 - "Relevant" or weighted pitch control, based on the value of the space towards a goal threat
 - Other pitch control models:
   - Fernández & Bornn (2018) - "Wide Open Spaces"
   - KNN-based methods
   - Hybrid ML-based models
-- Video and streaming support
+- Streaming support
 
 ## Architecture
 
