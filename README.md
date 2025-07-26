@@ -1,18 +1,18 @@
 ## pitch-control
 
-A high-performance Python library for calculating pitch control in football (soccer) using NumPy vectorization and additional speed-ups upto 10x with Numba.
+A very WIP but hopefully high-performance Python library for calculating pitch control in football (soccer) using NumPy vectorization and additional speed-ups upto 10x with Numba.
 Based on [Laurie Shaw's](https://github.com/Friends-of-Tracking-Data-FoTD/LaurieOnTracking/tree/master) implementation of the Spearman physics-based model, which is the 
 only currently supported model. It also implements a simple model of acceleration if provided for player times calculation.
 
 
 ## Features
 
-🚀 **High Performance**: 10x speedup using Numba JIT compilation  
-⚡ **Vectorized Operations**: Efficient NumPy-based calculations  
-🧠 **Realistic Physics**: Proper acceleration, reaction times, position-specific parameters  
-🎛️ **Configurable**: Easy to customize parameters and behavior  
-📊 **Rich Visualization**: Built-in plotting and analysis tools  
-🔧 **Extensible**: Clean architecture for adding new models  
+- **High Performance**: 🚀10x speedup using Numba JIT compilation (<1 ms per frame) 
+- **Numpy Fallback**: Efficient NumPy-based calculations as fallback without Numba
+- **Realistic Physics**: Proper acceleration, reaction times, position-specific parameters  
+- **Configurable**: Easy to customize parameters and behavior  
+- **Rich Visualization**: Built-in plotting and analysis tools  
+- **Extensible**: Clean architecture for adding new models  
 
 ## Quick Start
 
@@ -143,7 +143,6 @@ On my Macbook Air M3 laptop (16 GB RAM), with the default grid (105x68):
 
 - **22 players**: ~0.4-1 ms with Numba,  
 - **Numba speedup**: 10x vs pure NumPy
-- **Memory usage**: <100MB for full game analysis
 
 
 ```bash
@@ -195,9 +194,11 @@ print(f'Numba enabled: {result.metadata[\"use_numba\"]}')
 - Both Numba and NumPy backends
 
 ### Coming Soon
-- Fernández & Bornn (2018) - "Wide Open Spaces"
-- Hybrid ML-enhanced models
-- Real-time streaming support
+- Other pitch control models:
+  - Fernández & Bornn (2018) - "Wide Open Spaces"
+  - KNN-based methods
+  - Hybrid ML-based models
+- Video and streaming support
 
 ## Architecture
 
