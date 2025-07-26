@@ -209,6 +209,7 @@ print(f'Numba enabled: {result.metadata[\"use_numba\"]}')
 - Both Numba and NumPy backends
 
 ### Coming Soon
+- Proper benchmarking and extensive correctness verification w.r.t Laurie Shaw's Spearman implementation 
 - Support for `kloppy`-supported datasets
 - Smoothing of tracking data
 - Video and animation for entire games
@@ -290,7 +291,7 @@ If you use this library in research, please cite:
 
 ```bibtex
 @software{pitch_control,
-  title={Pitch Control: High-Performance Football Analytics},
+  title={Pitch Control: High-Performance Pitch Control Modeling for Football Analytics},
   author={Mayukh Samanta},
   year={2025},
   url={https://github.com/username/pitch-control}
