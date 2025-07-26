@@ -53,6 +53,13 @@ print(f"Calculated in {result.calculation_time:.3f} seconds")
 print(f"Home team controls {result.get_team_control_percentage('home'):.1f}% of pitch")
 ```
 
+This should give you (first run could take 100+ms for Numba compilation, subsequent ones ~1ms)
+
+```commandline
+Calculated in 0.001 seconds
+Home team controls 49.8% of pitch
+```
+
 ## Installation
 
 ```bash
